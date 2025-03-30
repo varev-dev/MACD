@@ -1,6 +1,6 @@
 import string
 
-import numpy as np
+import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -73,17 +73,25 @@ def plot_macd_with_signals(macd: [], signal: [], dates: [], trade_signals: dict)
     plt.xticks(rotation=30)
     plt.show()
 
-def trading_simulation(dates: [], prices: [], signals: dict, initial_capital: float) -> float:
-    capital = initial_capital
+def trading_simulation(dates: [], prices: [], signals: dict, initial_capital: float):
+    capital = initial_capital * prices[0]
     shares = 0
 
-    for date, action in signals.items():
+    daily_shares = []
+    daily_cash = []
+    daily_total = []
+
+    for date in dates:
+        action = ""
+        if date in signals.keys():
+            action = signals[date]
+
         index = dates.index(date)
         price = prices[index]
 
         if action == "buy":
             if capital > 0:
-                shares_to_buy = capital / price
+                shares_to_buy = capital // price
                 capital -= shares_to_buy * price
                 shares += shares_to_buy
         elif action == "sell":
@@ -91,10 +99,33 @@ def trading_simulation(dates: [], prices: [], signals: dict, initial_capital: fl
                 capital += shares * price
                 shares = 0
 
-    if shares > 0:
-        capital += shares * prices[-1]
+        daily_shares.append(shares * price)
+        daily_cash.append(capital)
+        daily_total.append(shares * price + capital)
 
-    return capital
+    return daily_shares, daily_cash, daily_total
+
+def plot_simulation_results(dates, shares, cash, total) -> None:
+    plt.figure(figsize=(10, 5))
+    plt.plot(dates, total, label='Wartość Całkowita', color='g', linewidth=2)
+    plt.plot(dates, cash, label='Gotówka', color='b', linewidth=0.75)
+    plt.plot(dates, shares, label='Wartość akcji', color='r', linewidth=0.75)
+
+    plt.fill_between(dates, 0, cash, color='b', alpha=0.3)
+    plt.fill_between(dates, cash, total, color='r', alpha=0.3)
+
+    plt.title('Wartość portfela w czasie')
+    plt.xlabel('Data')
+    plt.ylabel('Wartość (PLN)')
+    plt.grid(True)
+    plt.legend(loc='best')
+
+    formatter = mticker.StrMethodFormatter('{x:,.0f}')
+    plt.gca().yaxis.set_major_formatter(formatter)
+    max_value = max(total_value)
+    plt.ylim(0, min(max_value * 1.1, 3000000))
+
+    plt.show()
 
 if __name__ == '__main__':
     dates, closing_prices = data_read('wig20.csv')
@@ -112,5 +143,5 @@ if __name__ == '__main__':
 
     plot_macd_with_signals(macd, signal, dates, trade_signals)
 
-    simulation_res = trading_simulation(dates, closing_prices, trade_signals, 1000.0)
-    print(f"After simulation value: {simulation_res:.2f}")
+    shares_value, cash, total_value = trading_simulation(dates, closing_prices, trade_signals, 1000.0)
+    plot_simulation_results(dates, shares_value, cash, total_value)
