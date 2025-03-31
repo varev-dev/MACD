@@ -83,7 +83,7 @@ def plot_single_transaction_with_many_crossings(dates: [], macd: [], signal: [],
 
     selected_trade_dates = trade_dates[start_index:end_index + 1]
 
-    selected_dates = [date for date in dates if date in selected_trade_dates]
+    selected_dates = [date for date in dates if selected_trade_dates[0] <= date <= selected_trade_dates[-1]]
     selected_macd = [macd[dates.index(date)] for date in selected_dates]
     selected_signal = [signal[dates.index(date)] for date in selected_dates]
 
@@ -237,3 +237,4 @@ if __name__ == '__main__':
     plot_single_transaction_with_many_crossings(dates, macd, signal, index, trade_signals)
 
     plot_trade_profits(cash)
+    print(f"{max(max(cash), max(shares_value))}")
