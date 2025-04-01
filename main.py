@@ -107,7 +107,38 @@ def plot_single_transaction_with_many_crossings(dates: [], macd: [], signal: [],
     plt.legend()
     plt.grid()
     plt.xticks(rotation=30)
+    plt.show()
 
+def plot_single_transaction_on_index(dates: [], prices: [], trade_index, trade_signals: dict) -> None:
+    trade_dates = list(trade_signals.keys())
+    trade_pos = trade_dates.index(trade_index)
+
+    start_index = max(0, trade_pos - 2)
+    end_index = min(len(trade_dates) - 1, trade_pos + 4)
+
+    selected_trade_dates = trade_dates[start_index:end_index + 1]
+
+    selected_dates = [date for date in dates if selected_trade_dates[0] <= date <= selected_trade_dates[-1]]
+    selected_prices = [prices[dates.index(date)] for date in selected_dates]
+
+    crossing_values = [prices[dates.index(date)] for date in selected_trade_dates if date != trade_index]
+    selected_trade_dates.remove(trade_index)
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(selected_dates, selected_prices, label="WIG20", color='b')
+
+    if trade_index in trade_signals:
+        trade_date = dates.index(trade_index)
+        trade_value = prices[trade_date]
+        plt.scatter(trade_index, trade_value, color='g', s=100, marker='o', label='Punkt kupna-sprzedaży')
+
+    plt.scatter(selected_trade_dates, crossing_values, color='black', s=75, marker='x', label='Punkty przecięć')
+    plt.xlabel("Okres")
+    plt.ylabel("Wartość")
+    plt.title("WIG20 i pojedynczy punkt kupna-sprzedaży")
+    plt.legend()
+    plt.grid()
+    plt.xticks(rotation=20)
     plt.show()
 
 def trading_simulation(dates: [], prices: [], signals: dict, initial_capital: float):
@@ -231,10 +262,14 @@ if __name__ == '__main__':
     shares_value, cash = trading_simulation(dates, closing_prices, trade_signals, 1000.0)
     plot_simulation_results(dates, shares_value, cash)
     index = list(trade_signals.keys())[26]
+    print(trade_signals[index])
     plot_single_transaction_with_many_crossings(dates, macd, signal, index, trade_signals)
+    plot_single_transaction_on_index(dates, closing_prices, index, trade_signals)
 
-    index = list(trade_signals.keys())[44]
+    index = list(trade_signals.keys())[43]
+    print(trade_signals[index])
     plot_single_transaction_with_many_crossings(dates, macd, signal, index, trade_signals)
+    plot_single_transaction_on_index(dates, closing_prices, index, trade_signals)
 
     plot_trade_profits(cash)
     print(f"{max(max(cash), max(shares_value))}")
